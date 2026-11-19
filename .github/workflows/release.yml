@@ -1,0 +1,53 @@
+name: Build Foundry release
+on:
+  release:
+    types: [published]
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify version and build release manifest + ZIP
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, pathlib, zipfile
+          repo=os.environ['GITHUB_REPOSITORY']
+          tag=os.environ['RELEASE_TAG']
+          src=pathlib.Path('module.json')
+          m=json.loads(src.read_text(encoding='utf8'))
+          expected='v'+m['version']
+          if tag != expected:
+              raise SystemExit(f'Unsafe release: tag {tag!r} does not match module version {expected!r}')
+          base=f'https://github.com/{repo}'
+          m.update({
+              'url':base,
+              'manifest':f'{base}/releases/latest/download/module.json',
+              'download':f'{base}/releases/download/{tag}/the-speaking-hand.zip'
+          })
+          pathlib.Path('dist').mkdir(exist_ok=True)
+          data=json.dumps(m,indent=2,ensure_ascii=False)+'\n'
+          pathlib.Path('dist/module.json').write_text(data,encoding='utf8')
+          with zipfile.ZipFile('dist/the-speaking-hand.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in pathlib.Path('.').rglob('*'):
+                  if not p.is_file() or '.git' in p.parts or 'dist' in p.parts or p.name in ('PUBLISHING.md','.gitignore') or p.name.startswith('.'):
+                      continue
+                  # The downloaded module must install under the existing module ID folder.
+                  arc='guild-speaking-circle-autohud/'+p.as_posix()
+                  if p.as_posix()=='module.json':
+                      z.writestr(arc,data)
+                  else:
+                      z.write(p,arc)
+          print('Release manifest and ZIP generated')
+          PYTHON
+      - name: Attach Foundry module release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/module.json
+            dist/the-speaking-hand.zip
+          fail_on_unmatched_files: true
