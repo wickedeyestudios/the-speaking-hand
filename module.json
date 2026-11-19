@@ -1,0 +1,18 @@
+{
+  "id": "guild-speaking-circle-autohud",
+  "title": "The Speaking Hand by DM Wicked",
+  "description": "The Speaking Hand by DM Wicked: standalone speaking queue with compact tabbed GM dashboard, searchable surrogate selector, drag-and-drop order, undo, batch actions, assignment backups, optional sounds and Discord voice bridge settings.",
+  "version": "1.14.0",
+  "authors": [
+    {
+      "name": "DM Wicked"
+    }
+  ],
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "esmodules": [
+    "bootstrap.js"
+  ]
+}
